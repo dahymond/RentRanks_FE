@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Header } from "@/components/header"
-import { SearchBar } from "@/components/search-bar"
-import { HeroCarousel } from "@/components/hero-carousel"
-import { Button } from "@/components/ui/button"
-import { PenLine } from "lucide-react"
-import { useSession } from "next-auth/react"
+import Link from "next/link";
+import { Header } from "@/components/header";
+import { SearchBar } from "@/components/search-bar";
+import { HeroCarousel } from "@/components/hero-carousel";
+import { Button } from "@/components/ui/button";
+import { PenLine } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 export default function Main() {
-  const {data} = useSession()
+  const { data } = useSession();
 
   // console.log(data)
-  
+
   return (
     <div className="flex flex-col items-center justify-center w-screen">
       <Header />
@@ -24,7 +24,8 @@ export default function Main() {
                 Find and Review Landlords & Tenants
               </h1>
               <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                RentRanks helps you make informed decisions with real reviews from real people.
+                RentRanks helps you make informed decisions with real reviews
+                from real people.
               </p>
             </div>
 
@@ -33,11 +34,14 @@ export default function Main() {
             <div className="relative">
               <HeroCarousel />
               <div className="absolute inset-0 flex items-center justify-center z-10">
-                <Link href="/submit-review">
-                  <Button size="lg" className="text-lg font-medium px-5 py-6">
+                <Link className="" href="/submit-review">
+                  <button
+                    // size="lg"
+                    className="flex items-center justify-center gap-2 text-lg font-medium px-8 py-2 border border-white/20 text-white shadow-lg bg-[rgb(200,81,224)]/40 hover:bg-[rgb(200,81,224)] rounded-lg"
+                  >
                     <PenLine className="mr-2 h-5 w-5" />
                     Submit a Review
-                  </Button>
+                  </button>
                 </Link>
               </div>
             </div>
@@ -45,5 +49,5 @@ export default function Main() {
         </section>
       </main>
     </div>
-  )
+  );
 }
