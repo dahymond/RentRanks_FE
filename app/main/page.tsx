@@ -4,14 +4,33 @@ import Link from "next/link";
 import { Header } from "@/components/header";
 import { SearchBar } from "@/components/search-bar";
 import { HeroCarousel } from "@/components/hero-carousel";
-import { Button } from "@/components/ui/button";
 import { PenLine } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Main() {
-  const { data } = useSession();
+  const { data:session, status } = useSession();
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const router = useRouter();
 
-  // console.log(data)
+  useEffect(() => {
+    if (status === "unauthenticated" && !isRedirecting) {
+      setIsRedirecting(true);
+      router.push("/login");
+    }
+  }, [status, router, isRedirecting]);
+
+  if (status === "loading" || (status === "unauthenticated" && isRedirecting)) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <p>Loading...</p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center w-screen">
