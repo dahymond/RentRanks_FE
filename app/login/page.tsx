@@ -34,7 +34,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col md:flex-row w-full">
       {/* Login Form Section */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-8 md:p-12 bg-background">
+      <div className="w-full md:w-1/2 h-full flex items-center justify-center p-8 md:p-12 bg-background">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             {/* <div className="flex justify-center mb-6">
