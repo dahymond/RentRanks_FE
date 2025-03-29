@@ -1,11 +1,13 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { JWT } from "next-auth/jwt";
 
 // Backend API URL
 const DJANGO_API_URL =
-  process.env.DJANGO_API_URL || "http://127.0.0.1:8000/api";
+  // process.env.DJANGO_API_URL || "http://127.0.0.1:8000/api";
+  "https://rentranks.netlify.app/api";
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -21,12 +23,63 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.FACEBOOK_CLIENT_ID || "",
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET || "",
     }),
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: {
+          label: "Email",
+          type: "email",
+        },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Please provide credentials");
+        }
+
+        try {
+          const response = await fetch(
+            `${process.env.DJANGO_API_URL}/auth/login/`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: credentials?.email,
+                password: credentials?.password,
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            console.error("Invalid login attempt:", response.status, response.statusText);
+            return null; // Prevents authentication from proceeding
+          }
+
+          const data = await response.json();
+
+          if (!data.access_token) {
+            console.error("Invalid response from Django:", data);
+            return null;
+          }
+
+          return {
+            user_id: String(data.user_id),
+            email: credentials?.email,
+            djangoJwt: data.access_token,
+            jwtExpiry: data.exp,
+          };
+        } catch (error: any) {
+          console.error("Credentials Auth Error:", error?.message);
+          return null; // Return null to indicate authentication failure
+        }
+      },
+    }),
   ],
   pages: {
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account, profile, user }) {
       // console.log("OAuth Response:", token, account, profile)
 
       if (account && profile) {
@@ -51,8 +104,14 @@ export const authOptions: NextAuthOptions = {
 
           // if (!response.ok) throw new Error("Authentication failed");
           
+          if (!response.ok) {
+            console.error("Social login failed:", await response.json());
+            return null
+          }
+
           const data = await response.json();
-          // console.log("django's response:", data);
+
+          console.log("django's response:", data);
 
           token.user_id = String(data.user_id); // Store Django user ID
           token.djangoJwt = data.access_token; // Store Django JWT
@@ -60,7 +119,18 @@ export const authOptions: NextAuthOptions = {
           token.provider = account?.provider;
         } catch (error: any) {
           console.log("error message:", error?.message);
+          // return {...token, user_id: null, djangoJwt: null, jwtExpiry: null, provider: null }; // ✅ Proper return structure
+          return {}
         }
+      }
+
+      // Handle Credentials Authentication
+      if (account?.provider === "credentials" && user) {
+        token.user_id = String(user.user_id);
+        token.email = String(user.email);
+        token.djangoJwt = user.djangoJwt;
+        token.jwtExpiry = user.jwtExpiry;
+        token.provider = "credentials";
       }
 
       // django's jwt refresh
@@ -84,23 +154,29 @@ export const authOptions: NextAuthOptions = {
               }
             );
 
-            if (!refreshResponse.ok) throw new Error("Token refresh failed");
+            if (!refreshResponse.ok) {
+              console.error("Token refresh failed:", refreshResponse.statusText);
+              // return {...token, user_id: null, djangoJwt: null, jwtExpiry: null, provider: null }; // ✅ Proper return structure
+              return null
+            }
 
             const refreshData = await refreshResponse.json();
             token.djangoJwt = refreshData.access_token;
             token.jwtExpiry = refreshData.exp;
           } catch (refreshError: any) {
             console.log("Token refresh error:", refreshError.message);
+            // return {...token, user_id: null, djangoJwt: null, jwtExpiry: null, provider: null }; // ✅ Proper return structure Prevent storing an expired token
+            return null
           }
         }
       }
 
-      // console.log("JWT callback token:", token);
       return token;
     },
 
     async session({ session, token }) {
       // console.log("Session callback received token:", token);
+      
       const { user_id, djangoJwt, jwtExpiry, provider } = token as JWT;
 
       if (session.user) {
@@ -117,17 +193,5 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  // cookies: {
-  //   sessionToken: {
-  //     name: `next-auth.session-token`,
-  //     options: {
-  //       httpOnly: true,
-  //       secure: process.env.NODE_ENV === "production",
-  //       sameSite: "lax",
-  //       path: "/",
-  //     },
-  //   },
-  // },
   secret: process.env.NEXTAUTH_SECRET,
-  //   debug: process.env.NODE_ENV === "development",
 };
