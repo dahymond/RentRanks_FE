@@ -7,7 +7,7 @@ import { JWT } from "next-auth/jwt";
 // Backend API URL
 const DJANGO_API_URL =
   // process.env.DJANGO_API_URL || "http://127.0.0.1:8000/api";
-  "https://rentranks.netlify.app/api";
+  "https://rentranks-be.onrender.com/api";
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -51,7 +51,11 @@ export const authOptions: NextAuthOptions = {
           );
 
           if (!response.ok) {
-            console.error("Invalid login attempt:", response.status, response.statusText);
+            console.error(
+              "Invalid login attempt:",
+              response.status,
+              response.statusText
+            );
             return null; // Prevents authentication from proceeding
           }
 
@@ -95,33 +99,36 @@ export const authOptions: NextAuthOptions = {
         };
 
         // Send user data to Django
-        try {
-          const response = await fetch(`${DJANGO_API_URL}/auth/social-login/`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(userData),
-          });
 
-          // if (!response.ok) throw new Error("Authentication failed");
-          
-          if (!response.ok) {
-            console.error("Social login failed:", await response.json());
-            return null
-          }
+        const response = await fetch(`${DJANGO_API_URL}/auth/social-login/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(userData),
+        });
 
-          const data = await response.json();
-
-          console.log("django's response:", data);
-
-          token.user_id = String(data.user_id); // Store Django user ID
-          token.djangoJwt = data.access_token; // Store Django JWT
-          token.jwtExpiry = data.exp; // Store expiration timestamp from Django
-          token.provider = account?.provider;
-        } catch (error: any) {
-          console.log("error message:", error?.message);
-          // return {...token, user_id: null, djangoJwt: null, jwtExpiry: null, provider: null }; // ✅ Proper return structure
-          return {}
+        if (!response.ok) {
+          // console.log(response)
+          throw new Error("Authentication failed");
         }
+
+        // if (!response.ok) {
+        //   // console.error("Social login failed:", await response.json());
+        //   return {user_id: null, djangoJwt: null, jwtExpiry: null, provider: null }; // ✅ Proper return structure
+        // }
+
+        const data = await response.json();
+
+        // console.log("django's response:", data);
+
+        token.user_id = String(data.user_id); // Store Django user ID
+        token.djangoJwt = data.access_token; // Store Django JWT
+        token.jwtExpiry = data.exp; // Store expiration timestamp from Django
+        token.provider = account?.provider;
+        // } catch (error: any) {
+        //   console.log("error message:", error?.message, error);
+        //   return {user_id: null, djangoJwt: null, jwtExpiry: null, provider: null }; // ✅ Proper return structure
+        //   // return token
+        // }
       }
 
       // Handle Credentials Authentication
@@ -155,9 +162,18 @@ export const authOptions: NextAuthOptions = {
             );
 
             if (!refreshResponse.ok) {
-              console.error("Token refresh failed:", refreshResponse.statusText);
-              // return {...token, user_id: null, djangoJwt: null, jwtExpiry: null, provider: null }; // ✅ Proper return structure
-              return null
+              console.error(
+                "Token refresh failed:",
+                refreshResponse.statusText
+              );
+              return {
+                ...token,
+                user_id: null,
+                djangoJwt: null,
+                jwtExpiry: null,
+                provider: null,
+              }; // ✅ Proper return structure
+              // return token
             }
 
             const refreshData = await refreshResponse.json();
@@ -165,8 +181,14 @@ export const authOptions: NextAuthOptions = {
             token.jwtExpiry = refreshData.exp;
           } catch (refreshError: any) {
             console.log("Token refresh error:", refreshError.message);
-            // return {...token, user_id: null, djangoJwt: null, jwtExpiry: null, provider: null }; // ✅ Proper return structure Prevent storing an expired token
-            return null
+            return {
+              ...token,
+              user_id: null,
+              djangoJwt: null,
+              jwtExpiry: null,
+              provider: null,
+            }; // ✅ Proper return structure Prevent storing an expired token
+            // return null
           }
         }
       }
@@ -175,11 +197,15 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
-      // console.log("Session callback received token:", token);
-      
+      // console.log(
+      //   "line 179: A log of session value",
+      //   session,
+      //   "token vaule:",
+      //   token
+      // );
       const { user_id, djangoJwt, jwtExpiry, provider } = token as JWT;
 
-      if (session.user) {
+      if (session.user.email) {
         session.user = {
           ...session.user,
           user_id: user_id,
