@@ -365,8 +365,8 @@ export default function ProfilePage() {
 
           {/* Show claimed status if applicable */}
           {profile?.is_claimed && profile?.email === session?.user?.email && (
-            <div className="mt-4 p-4 border rounded-lg bg-green-50">
-              <div className="flex items-center gap-2 text-green-600">
+            <div className="mt-4 p-4 border rounded-lg bg-accent/10">
+              <div className="flex items-center gap-2 text-accent">
                 <CheckCircle2 className="h-5 w-5" />
                 <span>You own this profile</span>
               </div>

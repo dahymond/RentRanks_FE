@@ -65,21 +65,24 @@ export function UserNav() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href={`/profile/${session?.user.user_id}`}>
+                {" "}
+                My Profile
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/my-reviews">My Reviews</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => signOut({ callbackUrl: "/" })}
+            >
+              Log out
+            </DropdownMenuItem>
           </>
         )}
-        <DropdownMenuItem asChild>
-          <Link href={`/profile/${session?.user.user_id}`}>Profile</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/my-reviews">My Reviews</Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="cursor-pointer"
-          onClick={() => signOut({ callbackUrl: "/" })}
-        >
-          Log out
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
