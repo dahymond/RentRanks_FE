@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,9 +11,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export function SearchBar() {
   const router = useRouter()
-  const [searchType, setSearchType] = useState("tenant")
-  const [searchName, setSearchName] = useState("")
-  const [searchLocation, setSearchLocation] = useState("")
+  
+  const searchParams = useSearchParams()
+  const type = searchParams?.get('type') || "tenant"
+  const name = searchParams?.get('name') || ""
+  const location = searchParams?.get('location') || ""
+
+  const [searchType, setSearchType] = useState(type)
+  const [searchName, setSearchName] = useState(name)
+  const [searchLocation, setSearchLocation] = useState(location)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()

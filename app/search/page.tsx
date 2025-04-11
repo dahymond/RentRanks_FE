@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 
 interface SearchResult {
   id: string
@@ -19,19 +20,17 @@ interface SearchResult {
   lastReviewDate?: string
 }
 
-export default function SearchPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
+export default function SearchPage() {
   const { data: session } = useSession()
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  const type = (searchParams.type as string) || "tenant"
-  const name = (searchParams.name as string) || ""
-  const location = (searchParams.location as string) || ""
+  
+  // Use the useSearchParams hook instead of direct access
+  const searchParams = useSearchParams()
+  const type = searchParams?.get('type') || "tenant"
+  const name = searchParams?.get('name') || ""
+  const location = searchParams?.get('location') || ""
 
   useEffect(() => {
     const fetchResults = async () => {
