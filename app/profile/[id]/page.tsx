@@ -29,6 +29,7 @@ import {
   BookmarkCheck,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { ClaimProfileButton } from "@/components/claim-profile-button";
 
 interface Review {
   id: string;
@@ -54,7 +55,7 @@ interface ProfileData {
 }
 
 export default function ProfilePage() {
-  const { data: session, status: sessionStatus } = useSession();
+  const { data: session } = useSession();
   const params = useParams();
   const id = params.id as string;
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -63,6 +64,7 @@ export default function ProfilePage() {
   const [isSaved, setIsSaved] = useState(false);
   const [isLinkCopied, setIsLinkCopied] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
+  const [canClaim, setCanClaim] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -83,6 +85,11 @@ export default function ProfilePage() {
 
         const data = await response.json();
         setProfile(data);
+
+        // Check if current user can claim this profile
+        if (session?.user?.email === data.email && !data.is_claimed) {
+          setCanClaim(true);
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to fetch profile"
@@ -333,6 +340,18 @@ export default function ProfilePage() {
               </div>
             )}
           </div>
+
+          {canClaim && (
+            <div className="mt-8 p-4 border rounded-lg bg-muted">
+              <h3 className="font-medium mb-2">
+                This profile matches your email
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Would you like to claim this profile?
+              </p>
+              <ClaimProfileButton profileId={id} />
+            </div>
+          )}
         </div>
       </main>
     </div>
