@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,10 +26,22 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+
+type RegitrationType = {
+  status: "profile_exists" | "profile_claimed" | "profile_created";
+  profile_id: string;
+  is_claimed: boolean;
+  claimed_by_you: boolean;
+  message: string;
+} | null;
 
 export default function RegisterPage() {
   const { theme } = useTheme();
   const { push } = useRouter();
+
+  const [registrationResult, setRegistrationResult] =
+    useState<RegitrationType>(null);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [formData, setFormData] = useState({
@@ -92,7 +104,32 @@ export default function RegisterPage() {
         throw new Error(data.error || "Registration failed");
       }
 
-      push("/login?registered=true");
+      // Automatically sign in the user after registration
+      const signInResult = await signIn("credentials", {
+        email: formData.email,
+        password: formData.password,
+        redirect: false, // Important: handle redirect manually
+      });
+
+      if (signInResult?.error) {
+        throw new Error(signInResult.error);
+      }
+
+      // Handle different registration outcomes
+      if (data.status === "profile_exists") {
+        // Show profile claiming UI
+        setRegistrationResult(data);
+      } else if (
+        data.status === "profile_created" ||
+        data.status === "profile_claimed"
+      ) {
+        // Redirect to profile page if immediately claimed/created
+        push(`/profile/${data.profile_id}`);
+      }
+      // else {
+      //   // Default case - redirect to login
+      //   push("/login?registered=true");
+      // }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
@@ -321,6 +358,140 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
+      {/* Profile Claim Modal */}
+      {registrationResult && (
+        <ProfileClaimModal
+          registrationResult={registrationResult}
+          setRegistrationResult={setRegistrationResult}
+          setError={setError}
+          email={formData.email}
+          password={formData.password}
+        />
+      )}
     </div>
   );
 }
+
+const ProfileClaimModal = ({
+  registrationResult,
+  setRegistrationResult,
+  setError,
+  email,
+  password,
+}: {
+  registrationResult: RegitrationType;
+  setRegistrationResult: Dispatch<SetStateAction<RegitrationType>>;
+  email: string;
+  password: string;
+  setError: Dispatch<SetStateAction<string>>;
+}) => {
+  const router = useRouter();
+
+  const handleClaim = async () => {
+    try {
+      // First claim the profile
+      const claimResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_DJANGO_API_URL}/profiles/claim/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            profile_id: registrationResult?.profile_id,
+          }),
+        }
+      );
+
+      const claimData = await claimResponse.json();
+      if (!claimResponse.ok) {
+        throw new Error(claimData.error || "Claim failed");
+      }
+
+      // Sign in (if not already signed in)
+      const signInResult = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (signInResult?.error) {
+        throw new Error(signInResult.error);
+      }
+
+      // Redirect to claimed profile
+      router.push(`/profile/${registrationResult?.profile_id}`);
+    } catch (error) {
+      setError(
+        error instanceof Error ? error.message : "Failed to claim profile"
+      );
+    }
+  };
+  if (!registrationResult) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>
+            {registrationResult.is_claimed
+              ? "Profile Already Claimed"
+              : "Profile Found"}
+          </CardTitle>
+          <CardDescription>{registrationResult.message}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {registrationResult.is_claimed ? (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Your profile is already claimed by another user.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setRegistrationResult(null);
+                    router.push("/login?registered=true");
+                  }}
+                >
+                  Continue to Login
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() =>
+                    router.push(`/profile/${registrationResult.profile_id}`)
+                  }
+                >
+                  View Profile
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                We found an existing profile matching your email address.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setRegistrationResult(null);
+                    router.push("/login?registered=true");
+                  }}
+                >
+                  Create New Profile
+                </Button>
+                <Button className="flex-1" onClick={handleClaim}>
+                  Claim This Profile
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};

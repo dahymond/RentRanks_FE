@@ -26,6 +26,7 @@ const carouselImages = [
 export function HeroCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const [isPaused, setIsPaused] = useState(false)
 
   const nextSlide = () => {
     setCurrentIndex((prevIndex) => (prevIndex === carouselImages.length - 1 ? 0 : prevIndex + 1))
@@ -35,29 +36,50 @@ export function HeroCarousel() {
     setCurrentIndex((prevIndex) => (prevIndex === 0 ? carouselImages.length - 1 : prevIndex - 1))
   }
 
-  // Reset the interval when currentIndex changes
-  useEffect(() => {
-    // Clear any existing interval
+  const startInterval = () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
     }
-
-    // Set a new interval
     intervalRef.current = setInterval(() => {
-      nextSlide()
+      if (!isPaused) {
+        nextSlide()
+      }
     }, 5000)
+  }
 
-    // Cleanup function
+  // Initialize and clean up interval
+  useEffect(() => {
+    startInterval()
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
-        intervalRef.current = null
       }
     }
-  }, [currentIndex])
+  }, [])
+
+  // Reset interval when currentIndex changes or when manually navigating
+  useEffect(() => {
+    if (!isPaused) {
+      startInterval()
+    }
+  }, [currentIndex, isPaused])
+
+  const handlePrevClick = () => {
+    console.log("I am clicked")
+    setIsPaused(true)
+    prevSlide()
+    setTimeout(() => setIsPaused(false), 10000) // Resume after 10 seconds
+  }
+
+  const handleNextClick = () => {
+    setIsPaused(true)
+    nextSlide()
+    setTimeout(() => setIsPaused(false), 10000) // Resume after 10 seconds
+  }
 
   return (
     <div className="relative w-full h-[400px] md:h-[500px] overflow-hidden rounded-lg">
+      
       {carouselImages.map((image, index) => (
         <div
           key={index}
@@ -84,10 +106,10 @@ export function HeroCarousel() {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/20 text-white hover:bg-white/40"
-        onClick={prevSlide}
+        className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/20 text-white hover:bg-white/40 z-10"
+        onClick={handlePrevClick}
       >
-        <ChevronLeft className="h-6 w-6" />
+        <ChevronLeft className="h-6 w-6 cursor-pointer" />
         <span className="sr-only">Previous slide</span>
       </Button>
 
@@ -95,9 +117,9 @@ export function HeroCarousel() {
         variant="ghost"
         size="icon"
         className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/20 text-white hover:bg-white/40"
-        onClick={nextSlide}
+        onClick={handleNextClick}
       >
-        <ChevronRight className="h-6 w-6" />
+        <ChevronRight className="h-6 w-6 cursor-pointer" />
         <span className="sr-only">Next slide</span>
       </Button>
 
@@ -106,7 +128,11 @@ export function HeroCarousel() {
           <button
             key={index}
             className={`w-2 h-2 rounded-full ${index === currentIndex ? "bg-white" : "bg-white/50"}`}
-            onClick={() => setCurrentIndex(index)}
+            onClick={() => {
+              setIsPaused(true)
+              setCurrentIndex(index)
+              setTimeout(() => setIsPaused(false), 10000) // Resume after 10 seconds
+            }}
           >
             <span className="sr-only">Go to slide {index + 1}</span>
           </button>
@@ -115,4 +141,3 @@ export function HeroCarousel() {
     </div>
   )
 }
-

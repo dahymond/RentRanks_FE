@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Main() {
-  const { data:session, status } = useSession();
+  const { data: session, status } = useSession();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const router = useRouter();
 
@@ -58,14 +58,11 @@ export default function Main() {
 
             <SearchBar />
 
-            <div className="relative">
+            <div className="relative flex items-center justify-center">
               <HeroCarousel />
-              <div className="absolute inset-0 flex items-center justify-center z-10">
-                <Link className="" href="/submit-review">
-                  <button
-                    // size="lg"
-                    className="flex items-center justify-center gap-2 text-lg font-medium px-8 py-2 border border-white/20 text-white shadow-lg bg-[rgb(200,81,224)]/40 hover:bg-[rgb(200,81,224)] rounded-lg"
-                  >
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <Link href="/submit-review">
+                  <button className="pointer-events-auto flex items-center justify-center gap-2 text-lg font-medium px-8 py-2 border border-white/20 text-white shadow-lg bg-[rgb(200,81,224)]/40 hover:bg-[rgb(200,81,224)] rounded-lg">
                     <PenLine className="mr-2 h-5 w-5" />
                     Submit a Review
                   </button>

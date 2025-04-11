@@ -27,9 +27,11 @@ import {
   Copy,
   Check,
   BookmarkCheck,
+  CheckCircle2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { ClaimProfileButton } from "@/components/claim-profile-button";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Review {
   id: string;
@@ -47,6 +49,8 @@ interface ProfileData {
   rating: number;
   email: string;
   profileStatus: string;
+  is_claimed: boolean;
+  // claimed_by: string;
   reviewCount: number;
   location: string;
   lastReviewDate: string | null;
@@ -65,6 +69,7 @@ export default function ProfilePage() {
   const [isLinkCopied, setIsLinkCopied] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
   const [canClaim, setCanClaim] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -94,6 +99,11 @@ export default function ProfilePage() {
         setError(
           err instanceof Error ? err.message : "Failed to fetch profile"
         );
+        //   toast({
+        //   title: "Error",
+        //   description: "Failed to load profile data",
+        //   variant: "destructive",
+        // });
       } finally {
         setLoading(false);
       }
@@ -350,6 +360,16 @@ export default function ProfilePage() {
                 Would you like to claim this profile?
               </p>
               <ClaimProfileButton profileId={id} />
+            </div>
+          )}
+
+          {/* Show claimed status if applicable */}
+          {profile?.is_claimed && profile?.email === session?.user?.email && (
+            <div className="mt-4 p-4 border rounded-lg bg-green-50">
+              <div className="flex items-center gap-2 text-green-600">
+                <CheckCircle2 className="h-5 w-5" />
+                <span>You own this profile</span>
+              </div>
             </div>
           )}
         </div>

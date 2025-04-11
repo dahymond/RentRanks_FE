@@ -4,21 +4,26 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
+import { useSession } from "next-auth/react";
 
 export function ClaimProfileButton({ profileId }: { profileId: string }) {
   const router = useRouter();
   const [isClaiming, setIsClaiming] = useState(false);
-
+  const { data: session } = useSession();
   const handleClaim = async () => {
     setIsClaiming(true);
     try {
-      const response = await fetch("/profiles/claim-profile", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ profile_id: profileId }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_DJANGO_API_URL}/profiles/claim/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.user.djangoJwt}`,
+          },
+          body: JSON.stringify({ profile_id: profileId }),
+        }
+      );
 
       if (response.ok) {
         toast({
