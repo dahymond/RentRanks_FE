@@ -8,7 +8,7 @@ declare module "next-auth" {
       email: string;
       accessToken: string;
       djangoJwt: string;
-      jwtExpiry: string;
+      jwtExpiry: number;
       provider?: string;
     } & DefaultSession["user"];
   }
@@ -27,7 +27,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     user_id: string;
     djangoJwt: string;
-    jwtExpiry: string;
+    jwtExpiry: number;
     provider?: string;
     access_token?: string;
   }

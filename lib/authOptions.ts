@@ -81,8 +81,14 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: "/login",
+    error: '/login', // Error code passed in query string as ?error=
+    newUser: '/main' // New users will be directed here on first sign in
   },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      return url.startsWith(baseUrl) ? url : baseUrl
+    },
+    
     async jwt({ token, account, profile, user }) {
       // console.log("OAuth Response:", token, account, profile)
 
@@ -111,11 +117,6 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Authentication failed");
         }
 
-        // if (!response.ok) {
-        //   // console.error("Social login failed:", await response.json());
-        //   return {user_id: null, djangoJwt: null, jwtExpiry: null, provider: null }; // ✅ Proper return structure
-        // }
-
         const data = await response.json();
 
         // console.log("django's response:", data);
@@ -124,11 +125,6 @@ export const authOptions: NextAuthOptions = {
         token.djangoJwt = data.access_token; // Store Django JWT
         token.jwtExpiry = data.exp; // Store expiration timestamp from Django
         token.provider = account?.provider;
-        // } catch (error: any) {
-        //   console.log("error message:", error?.message, error);
-        //   return {user_id: null, djangoJwt: null, jwtExpiry: null, provider: null }; // ✅ Proper return structure
-        //   // return token
-        // }
       }
 
       // Handle Credentials Authentication
@@ -197,12 +193,6 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
-      // console.log(
-      //   "line 179: A log of session value",
-      //   session,
-      //   "token vaule:",
-      //   token
-      // );
       const { user_id, djangoJwt, jwtExpiry, provider } = token as JWT;
 
       if (session.user.email) {

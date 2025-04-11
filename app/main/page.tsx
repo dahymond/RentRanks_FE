@@ -15,11 +15,15 @@ export default function Main() {
   const router = useRouter();
 
   useEffect(() => {
+    if (status === "loading") return; // Wait for session to load
+
     if (status === "unauthenticated" && !isRedirecting) {
       setIsRedirecting(true);
       router.push("/login");
     }
   }, [status, router, isRedirecting]);
+
+  // console.log(status, router, isRedirecting)
 
   if (status === "loading" || (status === "unauthenticated" && isRedirecting)) {
     return (
@@ -30,6 +34,10 @@ export default function Main() {
         </main>
       </div>
     );
+  }
+
+  if (!session) {
+    return null; // Briefly show nothing while redirecting
   }
 
   return (

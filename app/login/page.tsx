@@ -1,18 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
-import Image from "next/image";
+import { getSession, signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Header } from "@/components/header";
-import { useTheme } from "next-themes";
+import { Card, CardContent } from "@/components/ui/card";
+// import { Header } from "@/components/header";
+// import { useTheme } from "next-themes";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -26,16 +19,20 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
-  const { theme } = useTheme();
-  const {push} = useRouter()
+  // const { theme } = useTheme();
+  const { push } = useRouter();
+
+  const searchParams = useSearchParams();
+  const registered = searchParams.get("registered");
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     // await signIn("google", { callbackUrl: "/search" });
@@ -69,7 +66,14 @@ export default function LoginPage() {
         setError("Invalid email or password");
         setIsLoading(false);
       } else {
-        push("/");
+        // push("/main");
+        // Force a session check before redirect
+        const session = await getSession();
+        if (session) {
+          push("/main");
+        } else {
+          setError("Login successful but session not found");
+        }
       }
     } catch (error) {
       setError("Something went wrong. Please try again.");
@@ -109,6 +113,11 @@ export default function LoginPage() {
             <TabsContent value="credentials">
               <Card className="border-border/50">
                 <CardContent className="pt-6 pb-6">
+                  {registered && (
+                    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+                      Registration successful! Please log in.
+                    </div>
+                  )}
                   <form onSubmit={handleCredentialsLogin} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
