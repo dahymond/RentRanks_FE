@@ -87,6 +87,8 @@ export default function LoginPage() {
     }
   };
 
+  // Protosol - 
+
   useEffect(() => {
     // console.log(status)
     if (session?.user.djangoJwt) {

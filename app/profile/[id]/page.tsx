@@ -29,7 +29,7 @@ import {
   BookmarkCheck,
   CheckCircle2,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { getSession, useSession } from "next-auth/react";
 import { ClaimProfileButton } from "@/components/claim-profile-button";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -59,7 +59,7 @@ interface ProfileData {
 }
 
 export default function ProfilePage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const params = useParams();
   const id = params.id as string;
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -108,11 +108,10 @@ export default function ProfilePage() {
         setLoading(false);
       }
     };
-
     if (session?.user) {
       fetchProfile();
     }
-  }, [id, session]);
+  }, [id, session, status]);
 
   const handleSave = () => {
     setIsSaved(!isSaved);
@@ -148,9 +147,9 @@ export default function ProfilePage() {
       <div className="min-h-screen flex flex-col">
         <Header />
         <main className="flex-1 container py-8 flex items-center justify-center">
-          <div className="text-center">
+          <div className="text-center m-10">
             <h1 className="text-2xl font-bold mb-4">Profile Not Found</h1>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground mx-5 mb-6">
               {error || "The profile you're looking for doesn't exist"}
             </p>
             <Link href="/">
@@ -184,11 +183,9 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <Badge variant={"outline"}>{"Profile Status->"}</Badge>
-                  <Badge variant={"secondary"}>
-                    {profile.profileStatus}{" "}
-                    {profile.email === session?.user.email && "by you"}
-                  </Badge>
+                  {/* <Badge variant={"outline"}>{"Profile Status->"}</Badge> */}
+                  <div className="text-sm">{"Profile Status"}</div>
+                  <Badge variant={"secondary"}>{profile.profileStatus} </Badge>
                 </div>
 
                 <div className="flex items-center text-muted-foreground">
@@ -315,7 +312,7 @@ export default function ProfilePage() {
               Reviews ({profile.reviewCount})
             </h2>
 
-            {profile.reviewCount > 0 ? (
+            {profile?.reviewCount > 0 ? (
               <div className="space-y-8">
                 {profile.reviews.map((review) => (
                   <div key={review.id} className="space-y-4">
@@ -364,14 +361,16 @@ export default function ProfilePage() {
           )}
 
           {/* Show claimed status if applicable */}
-          {profile?.is_claimed && profile?.email === session?.user?.email && (
-            <div className="mt-4 p-4 border rounded-lg bg-accent/10">
-              <div className="flex items-center gap-2 text-accent">
-                <CheckCircle2 className="h-5 w-5" />
-                <span>You own this profile</span>
+          {profile?.is_claimed &&
+            profile.profileStatus == "Claimed by you" &&
+            profile?.email === session?.user?.email && (
+              <div className="mt-4 p-4 border rounded-lg bg-accent/10">
+                <div className="flex items-center gap-2 text-accent">
+                  <CheckCircle2 className="h-5 w-5" />
+                  <span>You own this profile</span>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       </main>
     </div>

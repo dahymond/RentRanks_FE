@@ -26,7 +26,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 
 type RegitrationType = {
   status: "profile_exists" | "profile_claimed" | "profile_created";
@@ -115,6 +115,9 @@ export default function RegisterPage() {
         throw new Error(signInResult.error);
       }
 
+      // / Force session update
+      await getSession({ event: "storage" }); // Triggers session update across app
+
       // Handle different registration outcomes
       if (data.status === "profile_exists") {
         // Show profile claiming UI
@@ -124,7 +127,8 @@ export default function RegisterPage() {
         data.status === "profile_claimed"
       ) {
         // Redirect to profile page if immediately claimed/created
-        push(`/profile/${data.profile_id}`);
+        // push(`/profile/${data.profile_id}`);
+        window.location.href = `/profile/${data.profile_id}`;
       }
       // else {
       //   // Default case - redirect to login
@@ -461,7 +465,8 @@ const ProfileClaimModal = ({
                 <Button
                   className="flex-1"
                   onClick={() =>
-                    router.push(`/profile/${registrationResult.profile_id}`)
+                    // router.push(`/profile/${registrationResult.profile_id}`)
+                    (window.location.href = `/profile/${registrationResult.profile_id}`)
                   }
                 >
                   View Profile
