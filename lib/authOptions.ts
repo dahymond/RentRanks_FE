@@ -56,14 +56,18 @@ export const authOptions: NextAuthOptions = {
               response.status,
               response.statusText
             );
-            return null; // Prevents authentication from proceeding
+            throw Error(`Invalid login attempt:,
+              ${response.status},
+              ${response.statusText}`);
+            // return null; // Prevents authentication from proceeding
           }
 
           const data = await response.json();
 
           if (!data.access_token) {
             console.error("Invalid response from Django:", data);
-            return null;
+            throw Error("Invalid response from Django")
+            // return null;
           }
 
           return {
@@ -81,14 +85,14 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: "/login",
-    error: '/login', // Error code passed in query string as ?error=
-    newUser: '/main' // New users will be directed here on first sign in
+    error: "/login", // Error code passed in query string as ?error=
+    newUser: "/main", // New users will be directed here on first sign in
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
-      return url.startsWith(baseUrl) ? url : baseUrl
+      return url.startsWith(baseUrl) ? url : baseUrl;
     },
-    
+
     async jwt({ token, account, profile, user }) {
       // console.log("OAuth Response:", token, account, profile)
 

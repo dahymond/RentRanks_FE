@@ -47,36 +47,40 @@ export default function LoginPage() {
   const handleCredentialsLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
+  
     if (!email || !password) {
       setError("Email and password are required");
       return;
     }
-
+  
     setIsLoading(true);
-
+  
     try {
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
-
+  
       if (result?.error) {
         setError("Invalid email or password");
         setIsLoading(false);
+        return;
+      }
+  
+      // Add a small delay to ensure session is set
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Check session
+      const session = await getSession();
+      if (session) {
+        push("/main");
       } else {
-        // push("/main");
-        // Force a session check before redirect
-        const session = await getSession();
-        if (session) {
-          push("/main");
-        } else {
-          setError("Login successful but session not found");
-        }
+        setError("Login successful but session not found");
       }
     } catch (error) {
       setError("Something went wrong. Please try again.");
+    } finally {
       setIsLoading(false);
     }
   };
