@@ -66,11 +66,14 @@ export const authOptions: NextAuthOptions = {
 
           if (!data.access_token) {
             console.error("Invalid response from Django:", data);
-            throw Error("Invalid response from Django")
+            throw Error("Invalid response from Django");
             // return null;
           }
 
           return {
+            id: String(data.user_id),  // REQUIRED - Must be named 'id'
+            name:"",
+            image: "",
             user_id: String(data.user_id),
             email: credentials?.email,
             djangoJwt: data.access_token,
@@ -85,12 +88,16 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: "/login",
-    error: "/login", // Error code passed in query string as ?error=
-    newUser: "/main", // New users will be directed here on first sign in
+    // error: "/login", // Error code passed in query string as ?error=
+    // newUser: "/main", // New users will be directed here on first sign in
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
-      return url.startsWith(baseUrl) ? url : baseUrl;
+      // Allow relative URLs and specific redirects
+      if (url.startsWith(baseUrl) || url.startsWith("/main")) {
+        return url;
+      }
+      return baseUrl;
     },
 
     async jwt({ token, account, profile, user }) {
