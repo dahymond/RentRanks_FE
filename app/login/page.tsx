@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { getSession, signIn } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { getSession, signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 // import { Header } from "@/components/header";
@@ -25,6 +25,7 @@ export default function LoginPage() {
   // const { theme } = useTheme();
   const { push } = useRouter();
 
+  const { data: session } = useSession();
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered");
 
@@ -47,43 +48,49 @@ export default function LoginPage() {
   const handleCredentialsLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-  
+
     if (!email || !password) {
       setError("Email and password are required");
       return;
     }
-  
+
     setIsLoading(true);
-  
+
     try {
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
-  
+
       if (result?.error) {
         setError("Invalid email or password");
         setIsLoading(false);
         return;
       }
-  
+
       // Add a small delay to ensure session is set
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Check session
-      const session = await getSession();
-      if (session) {
-        push("/main");
-      } else {
-        setError("Login successful but session not found");
-      }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // // Check session
+      // const session = await getSession();
+      // if (session) {
+      //   push("/main");
+      // } else {
+      //   setError("Login successful but session not found");
+      // }
     } catch (error) {
       setError("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (session?.user.djangoJwt) {
+      push("/main");
+    }
+  }, [session]);
 
   return (
     <div className="h-screen flex flex-col md:flex-row w-full">
