@@ -88,8 +88,8 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: "/login",
-    // error: "/login", // Error code passed in query string as ?error=
-    // newUser: "/main", // New users will be directed here on first sign in
+    error: "/login", // Error code passed in query string as ?error=
+    newUser: "/main", // New users will be directed here on first sign in
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
@@ -221,4 +221,20 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
+  // Ensure this matches your deployment URL
+  baseUrl: process.env.NEXTAUTH_URL || "https://rentranks.netlify.app",
+  // Important for serverless environments
+  useSecureCookies: process.env.NODE_ENV === "production",
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+        domain: process.env.NODE_ENV === "production" ? ".rentranks.netlify.app" : undefined,
+      },
+    },
+  },
 };

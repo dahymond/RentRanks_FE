@@ -25,7 +25,7 @@ export default function LoginPage() {
   // const { theme } = useTheme();
   const { push } = useRouter();
 
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered");
 
@@ -60,7 +60,7 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email,
         password,
-        redirect: false,
+        redirect: true,
       });
 
       if (result?.error) {
@@ -70,8 +70,8 @@ export default function LoginPage() {
       }
 
       // Add a small delay to ensure session is set
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
+      // await new Promise((resolve) => setTimeout(resolve, 100));
+      console.log("login successful")
       // // Check session
       // const session = await getSession();
       // if (session) {
@@ -88,10 +88,11 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
+    // console.log(status)
     if (session?.user.djangoJwt) {
       push("/main");
     }
-  }, [session]);
+  }, [session, status]);
 
   return (
     <div className="h-screen flex flex-col md:flex-row w-full">
