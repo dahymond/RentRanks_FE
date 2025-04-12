@@ -80,6 +80,7 @@ export default function LoginPage() {
       //   setError("Login successful but session not found");
       // }
     } catch (error) {
+      console.log(error)
       setError("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
